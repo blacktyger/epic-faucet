@@ -1,4 +1,13 @@
 /.idea
-/__pycashe__/
+/__pycache__/
 *.pyc
 *.sqlite3
+/env/
+/src/core/envs.py
+/src/faucet/migrations/
+/.git
+/src/wallet/migrations/
+/epic-wallet/
+/src/manage.log
+/src/staticfiles
+/src/main.log

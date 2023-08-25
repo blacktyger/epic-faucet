@@ -1,0 +1,53 @@
+{%  load static %}
+
+<div class="row justify-content-center px-2">
+
+    {# ADDRESS INPUT #}
+    <span class="fs-3 mt-4 text-secondary">
+        <span class="material-icons align-middle mb-1"
+              style="font-size: 2.5rem;">
+            wallet
+        </span>
+        Wallet Address
+    </span>
+
+    <div class="input-group pt-2">
+        <span class="input-group-text" id="basic-addon2">
+            <span class="material-icons addressIcon fs-1">done_all</span>
+        </span>
+        <input type="text" class="form-control p-2 walletAddress" required
+               placeholder=""
+               aria-describedby="basic-addon2"
+               aria-label="walletAddress"
+               name="walletAddress" id="walletAddress">
+    </div>
+
+    {# USER FEEDBACK #}
+    <div class="text-end mt-1" style="height: 15px;">
+        <span class="addressFeedback"></span>
+    </div>
+</div>
+
+{# SYNCED WALLET CHECKBOX#}
+<div class="row justify-content-center p-0 mb-4 mt-0">
+    <div class="col-12 text-white" style="font-size: 0.9rem;">
+        <div class="form-check ms-3">
+            <input class="form-check-input" type="checkbox" value=""
+                   id="walletSyncedCheck" style="font-size: 1.2rem;">
+            <label class="form-check-label mt-1" for="walletSyncedCheck">
+                My wallet is connected and synchronized
+            </label>
+        </div>
+    </div>
+</div>
+
+{# RECEIVE BUTTON #}
+<div class="row justify-content-center p-0">
+    <div class="col-12 text-center">
+        <button class="btn btn-success btn-lg bg-green w-100 rounded-2" disabled id="receiveButton" onClick=claimCoins()>
+            CLAIM
+        </button>
+    </div>
+</div>
+
+

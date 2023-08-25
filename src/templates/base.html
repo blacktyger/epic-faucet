@@ -1,0 +1,70 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="apple-mobile-web-app-title" content="GiverOfEpic">
+
+        <link rel="icon" type="image/png" sizes="32x32" href="{%  static '/img/epic_coin_30px.jpg' %}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{%  static '/img/epic_coin_30px.jpg' %}">
+        <link rel="apple-touch-icon" type="image/png" href="{%  static '/img/apple-touch-icon.png' %}">
+        <!-- CSS -->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="{%  static '/cdns/5.3.0_dist_css_bootstrap.css' %}" rel="stylesheet">
+        <link href="{%  static '/style_n.css' %}" rel="stylesheet">
+
+        <!-- JS -->
+        <script src="https://kit.fontawesome.com/d60f5a0aa7.js" crossorigin="anonymous"></script>
+        <script src="{%  static '/cdns/11.6.5_dist_sweetalert2.all.js' %}"></script>
+        <script src="{%  static '/cdns/jquery-3.6.1.slim.js' %}"> </script>
+
+        <title>Giver Of Epic</title>
+
+    </head>
+    <body class="pt-2">
+
+        <div class="row justify-content-center mb-3">
+            <div class="col-12 text-center app-logo">
+                <img src="{% static 'img/giverofepic_logo_dark.png' %}"
+                     alt='em-logo' class="img-fluid">
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-12 px-2 app-body">
+                {% block body %} {% endblock %}
+            </div>
+        </div>
+
+        {# FOOTER #}
+        <div class="card-footer text-center mt-3">
+           <div class="row">
+               <div class="col-12 mb-2 text-white">
+                   Need support? Visit
+                   <a href="https://t.me/GiverOfEpic" target="_blank" class="">
+                       <i class="fa-brands fa-telegram ms-1"></i> <b>GiverOfEpic</b>
+                   </a>
+               </div>
+               <div class="col-12">
+                   <div class="small text-muted mt-0">
+                       <img src="{% static 'img/epicenter-logo-h500.png' %}" alt="epic-logo" height="20">
+
+                       <a class="mx-1" href="https://btlabs.tech" target="_blank">
+                            Created by <b>BT-LABS</b><sup><small>TM</small></sup>
+                       </a>
+                    </div>
+
+               </div>
+           </div>
+        </div>
+
+        <!-- Bootstrap Bundle with Popper -->
+        <script src="{%  static '/scripts/faucet.js' %}"></script>
+        <script src="{%  static '/scripts/input_listeners.js' %}"></script>
+        <script src="{%  static '/cdns/5.3.0_dist_js_bootstrap.bundle.js' %}"></script>
+    </body>
+
+</html>

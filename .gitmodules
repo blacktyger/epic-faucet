@@ -1,0 +1,4 @@
+[submodule "src/wallet/python_sdk"]
+	path = src/wallet/python_sdk
+	url = https://github.com/blacktyger/epic-py
+    branch = tipbot
