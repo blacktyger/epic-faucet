@@ -1,0 +1,72 @@
+{% extends "base.html" %} {% load static %}
+
+{% block body %}
+
+    <div class="row justify-content-between my-3 px-1">
+        <div class="col-6">
+            <button class="btn btn-sm btn-secondary opacity-75" disabled>
+                Balance: {{ wallet_balance }} EPIC
+            </button>
+        </div>
+        <div class="col-6 text-end">
+            <button class="btn btn-sm opacity-75 btn-success text-white ms-3">
+                <span class="material-icons" style="font-size: 1rem;">add_circle</span>
+                Charge Wallet
+            </button>
+        </div>
+
+    </div>
+
+    <div class="accordion accordion-flush my-3 px-1">
+        <div class="accordion-item" style="background: transparent">
+            <div class="accordion-header" id="heading">
+                <button class="accordion-button collapsed p-2 text-white bg-blue rounded-2"
+                        style="border: 1px solid #0a58ca;"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#collapse" aria-expanded="false" aria-controls="collapse">
+                Faucet FAQ
+                </button>
+            </div>
+            <div id="collapse" class="accordion-collapse collapse bg-dark" aria-labelledby="heading">
+                <div class="accordion-body text-white">
+                    <p>Welcome to the <b>Epic-Cash Faucet!</b></p>
+                    <ul>
+                        <li>Amount to claim: 0.01 EPIC</li>
+                        <li>Supported address: Epicbox</li>
+                        <li>Limits: User 1/day,  Total 100/day</li>
+                    </ul>
+                    <p> For best experience make sure your wallet is connected and synchronized before claiming.</p>
+
+                    <p>Supported wallets:</p>
+                    <ul>
+                        <li><a href="https://play.google.com/store/apps/details?id=com.cypherstack.epicpay" target="_blank">
+                            <span class="material-icons me-2">phone_iphone</span> Epic-Pay Wallet</a>
+                        </li>
+                        <li><a href="https://stackwallet.com/" target="_blank">
+                            <span class="material-icons me-2">devices</span> Stack-Wallet</a>
+                        </li>
+                        <li><a href="https://github.com/EpicCash/epic-gui-wallet/releases" target="_blank">
+                            <span class="material-icons me-2">desktop_windows</span> GUI Wallet</a>
+                        </li>
+                        <li><a href="https://github.com/EpicCash/epic-wallet/releases" target="_blank">
+                            <span class="material-icons me-2">terminal</span> CLI Wallet</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {%  include 'address_form.html' %}
+
+    {# GIVER OF EPIC STATUE #}
+    <div class="row my-4 justify-content-center">
+        <div class="col-auto text-center">
+            <img src="{% static 'img/giverofepic_statue.png' %}" alt='STATUE'>
+        </div>
+    </div>
+
+{% endblock %}
+
+
+
+
