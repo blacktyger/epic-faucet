@@ -4,12 +4,16 @@
 
     <div class="row justify-content-between my-3 px-1">
         <div class="col-6">
-            <button class="btn btn-sm btn-secondary opacity-75" disabled>
-                Balance: {{ wallet_balance }} EPIC
+            <button class="btn btn-sm btn-secondary" style="opacity: 85%" data-bs-toggle="tooltip" data-bs-placement="top"
+                    data-bs-title="{{ wallet.full_balance }}">
+                Balance:
+                {{ wallet.display_balance}} EPIC
+
             </button>
         </div>
         <div class="col-6 text-end">
-            <button class="btn btn-sm opacity-75 btn-success text-white ms-3">
+            <button onclick="chargeWallet()" class="btn btn-sm btn-success bg-green text-white ms-3"
+                style="opacity: 85%">
                 <span class="material-icons" style="font-size: 1rem;">add_circle</span>
                 Charge Wallet
             </button>
@@ -30,9 +34,9 @@
                 <div class="accordion-body text-white">
                     <p>Welcome to the <b>Epic-Cash Faucet!</b></p>
                     <ul>
-                        <li>Amount to claim: 0.01 EPIC</li>
-                        <li>Supported address: Epicbox</li>
-                        <li>Limits: User 1/day,  Total 100/day</li>
+                        <li>Amount to claim: <b>0.01 EPIC</b></li>
+                        <li>Supported address: <b>Epicbox</b></li>
+                        <li>Limits: User <b>1/day</b>,  Total <b>100/day</b></li>
                     </ul>
                     <p> For best experience make sure your wallet is connected and synchronized before claiming.</p>
 
@@ -51,6 +55,12 @@
                             <span class="material-icons me-2">terminal</span> CLI Wallet</a>
                         </li>
                     </ul>
+                    <p class="mt-3 mb-0">
+                        Join the
+                        <a href="https://t.me/EpicCash" target="_blank" class="">
+                            <i class="fa-brands fa-telegram ms-1"></i> <b>Epic-Cash Community</b>!
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>
@@ -64,7 +74,39 @@
             <img src="{% static 'img/giverofepic_statue.png' %}" alt='STATUE'>
         </div>
     </div>
+    <script>
+    function chargeWallet() {
+        Swal.fire({
+            {#icon: 'info',#}
+            title: ``,
+            html: `
+                <div class="mb-3 mt-1">
+                    <span class="material-icons text-danger" style="font-size: 4rem">
+                    diversity_1
+                    </span>
+                </div>
+                <p class="mb-5">
+                    You can help the project and charge the Faucet
+                    by sending EPIC to this <b>EpicBox</b> address:
+                </p>
 
+                <hr />
+                <code>{{ wallet.epicbox_address }}</code>
+                <hr />
+
+                 <div class="mt-5 mb-2">
+                     Need support? Join
+                     <a href="https://t.me/GiverOfEpic" target="_blank" class="text-dark">
+                         <i class="fa-brands fa-telegram ms-1"></i> <b>GiverOfEpic</b>.
+                     </a>
+                 </div>
+                 `,
+            position: 'center',
+            showConfirmButton: true,
+            confirmButtonText: `<i class="fa fa-check"></i> CONFIRM`,
+        })
+    }
+    </script>
 {% endblock %}
 
 

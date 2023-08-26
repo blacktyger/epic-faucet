@@ -1,4 +1,3 @@
-import asyncio
 import threading
 
 from django.http import HttpResponse
@@ -6,9 +5,13 @@ import psutil
 import ninja
 
 from core.envs import WALLET
-from faucet.models import Transaction as TransactionManager, connection_details, connection_authorized, \
+from faucet.models import (
+    Transaction as TransactionManager,
+    connection_details,
+    connection_authorized,
     update_connection_details
-from wallet.python_sdk import utils, Wallet
+    )
+from wallet.python_sdk import utils
 from wallet.python_sdk.wallet import models
 from wallet.models import FaucetWallet
 from wallet.schema import Payload
@@ -17,20 +20,22 @@ from wallet.schema import Payload
 SUCCESS = False
 ERROR = True
 
-# Get the FaucetWallet instance
+# Get the FaucetWallet instance and run balance updater
 try:
     instance_w, _ = FaucetWallet.objects.get_or_create(name=WALLET['NAME'])
     faucet_w = instance_w.get_wallet()
+
+    t = threading.Thread(target=instance_w.updater, args=(30,), daemon=True)
+    t.start()
+
 except Exception as e:
     print(str(e))
     print(f">> NO WALLET INSTANCE")
 
 
-api = ninja.NinjaAPI()
+api = ninja.NinjaAPI(docs_url=None)
 active_listeners: dict[psutil.Process: models.Listener] = dict()
 
-t = threading.Thread(target=instance_w.updater, args=(5, ), daemon=True)
-t.start()
 
 @api.post('/claim')
 async def claim(request, response: HttpResponse, payload: Payload):
@@ -60,7 +65,6 @@ async def claim(request, response: HttpResponse, payload: Payload):
 
     # Make sure epicbox listener is running
     epicbox_is_running = utils.find_process_by_name('epicbox')
-    print(epicbox_is_running)
     if not epicbox_is_running:
         print(">> EPICBOX_LISTENER wasn't running, starting..")
         await run_epicbox(request)

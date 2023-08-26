@@ -9,18 +9,12 @@ import humanfriendly
 
 from wallet.python_sdk.utils import parse_uuid, logger
 from wallet.python_sdk import utils
+from core.envs import *
 
 SUCCESS = False
 ERROR = True
 
-TIME_LOCK_MINUTES = 2
-
-MINIMUM_CONFIRMATIONS = 2
-FAUCET_AMOUNT = 0.01
-DEFAULT_FEE = 0.008
-MAX_AMOUNT = 1
 DECIMALS = Decimal(10 ** 8)
-DAILY_LIMIT = 100
 
 
 class TxStatus:
@@ -119,10 +113,10 @@ class Transaction(models.Model):
     @classmethod
     async def daily_limit(cls):
         delta = timezone.now() - datetime.timedelta(days=1)
-        last_24h_txs = await cls.objects.filter(timestamp__gte=delta).acount()
+        last_24h_txs = await cls.objects.filter(timestamp__gte=delta, type=TxType.SENT).acount()
 
         if last_24h_txs > DAILY_LIMIT:
-            return utils.response(ERROR, 'Claim limit for the day is exhausted')
+            return utils.response(ERROR, "Faucet's limit for the day is reached, try again tomorrow!")
 
         return utils.response(SUCCESS, f'Limit not reached yet ({last_24h_txs}/{DAILY_LIMIT})')
 
@@ -199,16 +193,24 @@ class Transaction(models.Model):
         return utils.response(SUCCESS, 'tx_args valid')
 
     def __str__(self):
-        if self.status == TxStatus.FINALIZED:
-            icon = "🟢"
-        elif self.status == TxStatus.PENDING:
-            icon = "🟡"
-        elif self.status == TxStatus.FAILED:
-            icon = "🔴"
-        else:
-            icon = "🔘"
 
-        return f"{icon} {self.amount} -> {get_short(self.address)}"
+        if self.type == TxType.SENT:
+            type_ = "->"
+
+            if self.status == TxStatus.FINALIZED:
+                icon = "🟢"
+            elif self.status == TxStatus.PENDING:
+                icon = "🟡"
+            elif self.status == TxStatus.FAILED:
+                icon = "🔴"
+            else:
+                icon = "🔘"
+
+        else:
+            type_ = "<-"
+            icon = "📩"
+
+        return f"[{self.timestamp.strftime('%m-%d %H:%M')}] {icon} {self.amount} {type_} {get_short(self.address)}"
 
 
 async def connection_details(request, addr, update: bool = False):

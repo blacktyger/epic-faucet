@@ -11,3 +11,4 @@
 /src/manage.log
 /src/staticfiles
 /src/main.log
+/src/wallet/test.py

@@ -73,7 +73,7 @@ function failedTx(message) {
                  <i class="fa-brands fa-telegram ms-1"></i> <b>GiverOfEpic</b>. 
              </a>
          </div>
-         <hr class="mb-2" />
+         <hr class="mb-2 mt-3" />
          `,
         position: 'center',
         showConfirmButton: true,
