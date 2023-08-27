@@ -74,38 +74,39 @@
             <img src="{% static 'img/giverofepic_statue.png' %}" alt='STATUE'>
         </div>
     </div>
+
     <script>
-    function chargeWallet() {
-        Swal.fire({
-            {#icon: 'info',#}
-            title: ``,
-            html: `
-                <div class="mb-3 mt-1">
-                    <span class="material-icons text-danger" style="font-size: 4rem">
-                    diversity_1
-                    </span>
-                </div>
-                <p class="mb-5">
-                    You can help the project and charge the Faucet
-                    by sending EPIC to this <b>EpicBox</b> address:
-                </p>
+        function chargeWallet() {
+            Swal.fire({
+                {#icon: 'info',#}
+                title: ``,
+                html: `
+                    <div class="mb-3 mt-1">
+                        <span class="material-icons text-danger" style="font-size: 4rem">
+                        diversity_1
+                        </span>
+                    </div>
+                    <p class="mb-5">
+                        You can help the project and charge the Faucet
+                        by sending EPIC to this <b>EpicBox</b> address:
+                    </p>
 
-                <hr />
-                <code>{{ wallet.epicbox_address }}</code>
-                <hr />
+                    <hr />
+                    <code>{{ wallet.epicbox_address }}</code>
+                    <hr />
 
-                 <div class="mt-5 mb-2">
-                     Need support? Join
-                     <a href="https://t.me/GiverOfEpic" target="_blank" class="text-dark">
-                         <i class="fa-brands fa-telegram ms-1"></i> <b>GiverOfEpic</b>.
-                     </a>
-                 </div>
-                 `,
-            position: 'center',
-            showConfirmButton: true,
-            confirmButtonText: `<i class="fa fa-check"></i> CONFIRM`,
-        })
-    }
+                     <div class="mt-5 mb-2">
+                         Need support? Join
+                         <a href="https://t.me/GiverOfEpic" target="_blank" class="text-dark">
+                             <i class="fa-brands fa-telegram ms-1"></i> <b>GiverOfEpic</b>.
+                         </a>
+                     </div>
+                     `,
+                position: 'center',
+                showConfirmButton: true,
+                confirmButtonText: `<i class="fa fa-check"></i> CONFIRM`,
+            })
+        }
     </script>
 {% endblock %}
 

@@ -217,7 +217,7 @@ async def connection_details(request, addr, update: bool = False):
     address, created = await ReceiverAddr.objects.aget_or_create(address=addr)
     address.last_activity = timezone.now()
 
-    ip, is_routable = get_client_ip(request)
+    ip, is_routable = get_client_ip(request, request_header_order=['HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'])
     if ip:
         ip, created = await IPAddr.objects.aget_or_create(address=ip)
         ip.last_activity = timezone.now()

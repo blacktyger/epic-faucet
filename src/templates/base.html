@@ -15,6 +15,7 @@
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <link href="{%  static '/cdns/5.3.0_dist_css_bootstrap.css' %}" rel="stylesheet">
         <link href="{%  static '/style_n.css' %}" rel="stylesheet">
+        <link rel="stylesheet" href="{% static '/cdns/cookiealert.css' %}">
 
         <!-- JS -->
         <script src="https://kit.fontawesome.com/d60f5a0aa7.js" crossorigin="anonymous"></script>
@@ -25,6 +26,16 @@
 
     </head>
     <body class="pt-2">
+
+        <!-- START Bootstrap-Cookie-Alert -->
+        <div class="alert text-center cookiealert" role="alert">
+             &#x1F36A; We use cookies to ensure best experience on our website. <a href="https://cookiesandyou.com/" target="_blank">Learn more</a>
+
+            <button type="button" class="btn btn-primary btn-sm acceptcookies">
+                I agree
+            </button>
+        </div>
+        <!-- END Bootstrap-Cookie-Alert -->
 
         <div class="row justify-content-center mb-3">
             <div class="col-12 text-center app-logo">
@@ -61,6 +72,7 @@
         </div>
 
         <!-- Bootstrap Bundle with Popper -->
+        <script src="{%  static '/cdns/cookiealert.js' %}"></script>
         <script src="{%  static '/scripts/faucet.js' %}"></script>
         <script src="{%  static '/scripts/input_listeners.js' %}"></script>
         <script src="{%  static '/cdns/5.3.0_dist_js_bootstrap.bundle.js' %}"></script>

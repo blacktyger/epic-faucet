@@ -4,34 +4,28 @@ from django.http import HttpResponse
 import psutil
 import ninja
 
+from wallet.python_sdk.wallet import models
+from wallet.models import FaucetWallet
+from wallet.python_sdk import utils
+from wallet.schema import Payload
 from core.envs import WALLET
+from core import envs
 from faucet.models import (
     Transaction as TransactionManager,
     connection_details,
     connection_authorized,
     update_connection_details
     )
-from wallet.python_sdk import utils
-from wallet.python_sdk.wallet import models
-from wallet.models import FaucetWallet
-from wallet.schema import Payload
 
 
 SUCCESS = False
 ERROR = True
 
-# Get the FaucetWallet instance and run balance updater
-try:
-    instance_w, _ = FaucetWallet.objects.get_or_create(name=WALLET['NAME'])
-    faucet_w = instance_w.get_wallet()
+instance_w, _ = FaucetWallet.objects.get_or_create(name=WALLET['NAME'])
+faucet_w = instance_w.get_wallet()
 
-    t = threading.Thread(target=instance_w.updater, args=(30,), daemon=True)
-    t.start()
-
-except Exception as e:
-    print(str(e))
-    print(f">> NO WALLET INSTANCE")
-
+t = threading.Thread(target=instance_w.updater, args=(30,), daemon=True)
+t.start()
 
 api = ninja.NinjaAPI(docs_url=None)
 active_listeners: dict[psutil.Process: models.Listener] = dict()
@@ -85,7 +79,7 @@ async def claim(request, response: HttpResponse, payload: Payload):
     await update_connection_details(ip.address, address.address)
 
     # Set user cookie limit
-    response.set_cookie("claimed", True, max_age=10)
+    response.set_cookie("claimed", True, max_age=envs.COOKIE_AGE)
 
     return utils.response(SUCCESS, transaction.status, str(transaction.tx_slate_id))
 
@@ -115,10 +109,19 @@ async def run_epicbox(request):
 
 @api.get('/stop_epicbox')
 async def stop_epicbox(request):
+    await faucet_w.get_wallet()
     response = {'wallet': faucet_w.config.name, 'action': 'stop_epicbox', 'data': {}}
 
     for _, listener in active_listeners.items():
         response['data'][str(listener)] = 'stopped'
         listener.stop()
+
+    return response
+
+
+@api.get('/outputs')
+async def stop_epicbox(request, outputs: int = 15):
+    response = await faucet_w.create_outputs(outputs)
+    response = {'wallet': faucet_w.config.name, 'action': 'create_outputs', 'data': response}
 
     return response

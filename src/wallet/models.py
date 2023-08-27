@@ -31,13 +31,15 @@ class FaucetWallet (models.Model):
         asyncio.run(updater_())
 
     def display_balance(self):
-        return round(self.balance['amount_currently_spendable'] + self.balance['amount_awaiting_finalization'], 3)
+        if self.balance:
+            return round(self.balance['amount_currently_spendable'] + self.balance['amount_awaiting_finalization'], 3)
 
     def full_balance(self):
-        spendable = round(self.balance['amount_currently_spendable'], 3)
-        pending = round(self.balance['amount_awaiting_finalization'] + self.balance['amount_awaiting_confirmation'], 3)
-        return f"Spendable: {spendable if spendable else '0.00'} \n" \
-               f"Pending: {pending if pending else '0.00'}"
+        if self.balance:
+            spendable = round(self.balance['amount_currently_spendable'], 3)
+            pending = round(self.balance['amount_awaiting_finalization'] + self.balance['amount_awaiting_confirmation'], 3)
+            return f"Spendable: {spendable if spendable else '0.00'} \n" \
+                   f"Pending: {pending if pending else '0.00'}"
 
     def get_wallet(self):
         if not os.path.isdir(WALLET['WALLET_DIR']):

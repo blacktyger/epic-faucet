@@ -17,7 +17,7 @@ SECRET_KEY = envs.SECRET_KEY
 DEBUG = envs.DEBUG
 
 ALLOWED_HOSTS = ["127.0.0.1", "giverofepic.com"]
-
+CSRF_TRUSTED_ORIGINS = ['https://www.giverofepic.com', 'https://giverofepic.com', 'http://127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
@@ -113,7 +113,8 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
-if 'PRODUCTION' in os.environ:
+if 'PRODUCTION' in os.environ and os.environ['PRODUCTION'] == 'true':
+    print(f"RUN IN PRODUCTION MODE")
     STATIC_ROOT = "/var/www/html/giverofepic.com/staticfiles"
 
 # Default primary key field type
