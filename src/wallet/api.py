@@ -1,14 +1,16 @@
-import threading
+import json
+import os
 
 from django.http import HttpResponse
+from grpclib.client import Channel
 import psutil
 import ninja
 
-from wallet.python_sdk.wallet import models
 from wallet.models import FaucetWallet
-from wallet.python_sdk import utils
-from wallet.schema import Payload
-from core.envs import WALLET
+from wallet.python_sdk.src.grpc_server import server_pb2, server_grpc
+from wallet.python_sdk.src.wallet import models
+from wallet.python_sdk.src import utils
+from wallet.schema import Payload, TxSchema, BalanceSchema
 from core import envs
 from faucet.models import (
     Transaction as TransactionManager,
@@ -21,14 +23,17 @@ from faucet.models import (
 SUCCESS = False
 ERROR = True
 
-instance_w, _ = FaucetWallet.objects.get_or_create(name=WALLET['NAME'])
-faucet_w = instance_w.get_wallet()
-
-t = threading.Thread(target=instance_w.updater, args=(30,), daemon=True)
-t.start()
-
 api = ninja.NinjaAPI(docs_url=None)
 active_listeners: dict[psutil.Process: models.Listener] = dict()
+
+
+async def wallet_call(call: str, data: dict = None) -> str:
+    async with Channel(envs.GRPC_HOST, envs.GRPC_PORT) as channel:
+        if data is None: data = dict()
+        server = server_grpc.WalletServerStub(channel)
+        kwargs = {'call': call, 'data': json.dumps(data)}
+        reply = await server.Call(server_pb2.WalletRequest(**kwargs))
+        return reply.result
 
 
 @api.post('/claim')
@@ -57,14 +62,9 @@ async def claim(request, response: HttpResponse, payload: Payload):
     if tx_args_validation['error']:
         return utils.response(ERROR, "Something went wrong, please try again later.")
 
-    # Make sure epicbox listener is running
-    epicbox_is_running = utils.find_process_by_name('epicbox')
-    if not epicbox_is_running:
-        print(">> EPICBOX_LISTENER wasn't running, starting..")
-        await run_epicbox(request)
-
     # Send the transaction
-    tx_slate = await faucet_w.send_epicbox_tx(**tx_args)
+    tx_slate = await wallet_call(call='send_epicbox', data=tx_args)
+    tx_slate = json.loads(tx_slate)
 
     if tx_slate['error']:
         if 'NotEnoughFunds' in tx_slate['msg']:
@@ -73,55 +73,41 @@ async def claim(request, response: HttpResponse, payload: Payload):
             return utils.response(ERROR, tx_slate['msg'])
 
     # Save transaction details to the database
-    transaction = await TransactionManager.create_faucet_transaction(address=tx_args['address'], slate=tx_slate['data'], wallet=faucet_w)
+    wallet_instance = await FaucetWallet.objects.aget(name=envs.WALLET['NAME'])
+    transaction = await TransactionManager.create_faucet_transaction(
+        address=tx_args['address'], slate=tx_slate['data'], wallet=wallet_instance)
 
-    # Update user's activity
-    await update_connection_details(ip.address, address.address)
+    if 'PRODUCTION' in os.environ and ip.address not in envs.DEV_ADDRESSES and address.address not in envs.DEV_ADDRESSES:
+        # Update user's activity
+        await update_connection_details(ip.address, address.address)
 
-    # Set user cookie limit
-    response.set_cookie("claimed", True, max_age=envs.COOKIE_AGE)
+        # Set user cookie limit
+        response.set_cookie("claimed", True, max_age=envs.COOKIE_AGE)
 
     return utils.response(SUCCESS, transaction.status, str(transaction.tx_slate_id))
 
 
 @api.get('/balance')
 async def wallet(request):
-    balance = await faucet_w.get_balance()
-    return balance
-
-
-@api.get('/run_epicbox')
-async def run_epicbox(request):
-    response = {
-        'wallet': faucet_w.config.name,
-        'action': 'run_epicbox',
-        'data': {'address': faucet_w.config.epicbox_address}
-        }
-    # Set a callback function, it will listen for incoming transactions and update transaction status in the database
-    callback = TransactionManager.updater_callback
-
-    listener = await faucet_w.run_epicbox(logger=faucet_w.logger, callback=callback)
-    active_listeners[listener.process] = listener
-    response['data']['listener'] = str(listener)
-
-    return response
-
-
-@api.get('/stop_epicbox')
-async def stop_epicbox(request):
-    await faucet_w.get_wallet()
-    response = {'wallet': faucet_w.config.name, 'action': 'stop_epicbox', 'data': {}}
-
-    for _, listener in active_listeners.items():
-        response['data'][str(listener)] = 'stopped'
-        listener.stop()
-
-    return response
+    balance = await wallet_call(call='balance')
+    return json.loads(balance)
 
 
 @api.get('/outputs')
-async def stop_epicbox(request, outputs: int = 15):
-    response = await faucet_w.create_outputs(outputs)
-    response = {'wallet': faucet_w.config.name, 'action': 'create_outputs', 'data': response}
+async def create_outputs(request, outputs: int = 15):
+    response = await wallet_call(call='create_outputs', data={'num': outputs})
+    return {'action': 'create_outputs', 'data': response}
 
-    return response
+
+@api.post('/update_tx')
+async def update_tx(request, tx: TxSchema):
+    await TransactionManager.updater_callback(tx.data)
+    return {'action': 'update_tx', 'data': tx.data}
+
+
+@api.post('/update_balance')
+async def update_balance(request, balance: BalanceSchema):
+    wallet_instance = await FaucetWallet.objects.aget(name=envs.WALLET['NAME'])
+    wallet_instance.balance = json.loads(balance.data)
+    await wallet_instance.asave()
+    return {'action': 'update_balance', 'data': balance.data}

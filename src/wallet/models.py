@@ -6,7 +6,7 @@ import os
 from django.contrib import admin
 from django.db import models
 
-from .python_sdk import Wallet as EpicWallet
+from .python_sdk.src import Wallet as EpicWallet
 from core.envs import WALLET
 
 
@@ -20,16 +20,6 @@ class FaucetWallet (models.Model):
 
     wallet: EpicWallet = None
 
-    def updater(self, interval: int):
-        async def updater_():
-            while True:
-                balance = await self.wallet.get_balance()
-                self.balance = json.loads(balance.json())
-                await self.asave()
-                await asyncio.sleep(interval)
-
-        asyncio.run(updater_())
-
     def display_balance(self):
         if self.balance:
             return round(self.balance['amount_currently_spendable'] + self.balance['amount_awaiting_finalization'], 3)
@@ -40,14 +30,6 @@ class FaucetWallet (models.Model):
             pending = round(self.balance['amount_awaiting_finalization'] + self.balance['amount_awaiting_confirmation'], 3)
             return f"Spendable: {spendable if spendable else '0.00'} \n" \
                    f"Pending: {pending if pending else '0.00'}"
-
-    def get_wallet(self):
-        if not os.path.isdir(WALLET['WALLET_DIR']):
-            print(f'>> CREATING NEW EPIC-WALLET')
-            asyncio.run(self.create_new())
-
-        self.wallet = EpicWallet(path=WALLET['WALLET_DIR'], long_running=True)
-        return self.wallet
 
     async def create_new(self, **kwargs):
         if not kwargs:

@@ -7,8 +7,9 @@ from datetime import timedelta
 from django.db import models
 import humanfriendly
 
-from wallet.python_sdk.utils import parse_uuid, logger
-from wallet.python_sdk import utils
+from core import envs
+from wallet.python_sdk.src.utils import parse_uuid, logger
+from wallet.python_sdk.src import utils
 from core.envs import *
 
 SUCCESS = False
@@ -98,11 +99,11 @@ class Transaction(models.Model):
     type = models.CharField(max_length=10, default=TxType.SENT)
     fee = models.DecimalField(max_digits=24, decimal_places=8)
 
-    def update_params(self, **kwargs):
+    async def update_params(self, **kwargs):
         """Update Transaction parameters in the database"""
         for k, v in kwargs.items():
             setattr(self, k, v)
-        self.save()
+        await self.asave()
 
     @staticmethod
     def readable_ints(value: int | str) -> Decimal:
@@ -121,14 +122,14 @@ class Transaction(models.Model):
         return utils.response(SUCCESS, f'Limit not reached yet ({last_24h_txs}/{DAILY_LIMIT})')
 
     @classmethod
-    def receive_transaction(cls, data: str):
+    async def receive_transaction(cls, data: str):
         args = []
 
         for ele in data.split('['):
             if 'Slate' not in ele:
                 args.append(ele.split(']')[0])
 
-        tx = cls.objects.create(
+        tx = await cls.objects.acreate(
             tx_slate_id=args[0],
             address=args[1],
             amount=Decimal(args[2]),
@@ -138,7 +139,7 @@ class Transaction(models.Model):
             )
 
         logger.debug(tx)
-        EpicBoxLogger.objects.create(transaction=tx, data=data)
+        await EpicBoxLogger.objects.acreate(transaction=tx, data=data)
 
     @classmethod
     async def create_faucet_transaction(cls, address: str, slate: dict, wallet):
@@ -146,33 +147,33 @@ class Transaction(models.Model):
             tx_slate_id=slate['id'],
             height=slate['height'],
             address=address,
-            wallet_id=wallet.config.id,
+            wallet_id=wallet.id,
             amount=cls.readable_ints(slate['amount']),
             status=TxStatus.PENDING,
             fee=cls.readable_ints(slate['fee'])
             )
 
     @classmethod
-    def updater_callback(cls, line: str):
+    async def updater_callback(cls, line: str):
         tx_slate_id = parse_uuid(line)
+
         if tx_slate_id and 'wallet_' not in line:
-            logger.critical(line)
-            tx = cls.objects.filter(tx_slate_id=tx_slate_id[0]).first()
+            tx = await cls.objects.filter(tx_slate_id=tx_slate_id[0]).afirst()
 
             if tx:
                 if "finalized successfully" in line:
                     logger.debug(f"{get_short(tx_slate_id[0])} database updated (finalized)")
-                    tx.update_params(status=TxStatus.FINALIZED)
-                    EpicBoxLogger.objects.create(transaction=tx, data=line)
+                    await tx.update_params(status=TxStatus.FINALIZED)
+                    await EpicBoxLogger.objects.acreate(transaction=tx, data=line)
 
                 elif 'error' in line:
                     logger.debug(f"{get_short(tx_slate_id[0])} database updated (failed)")
-                    tx.update_params(status=TxStatus.FAILED)
-                    EpicBoxLogger.objects.create(transaction=tx, data=line)
+                    await tx.update_params(status=TxStatus.FAILED)
+                    await EpicBoxLogger.objects.acreate(transaction=tx, data=line)
 
             elif "received from" in line:
                 logger.debug(f"Incoming transaction: {get_short(tx_slate_id[0])}")
-                cls.receive_transaction(line)
+                await cls.receive_transaction(line)
 
     @staticmethod
     def validate_tx_args(amount: float | int | str, address: str):

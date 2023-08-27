@@ -12,3 +12,5 @@
 /src/staticfiles
 /src/main.log
 /src/wallet/test.py
+/src/wallet_server.log
+/src/server.log
