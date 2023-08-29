@@ -26,7 +26,12 @@ async function claimCoins() {
         body: JSON.stringify(body)
       }).catch(err => console.log(err))
 
-    response = await response.json()
+    response = await response.json().catch(err => {
+        console.log(err)
+        spawnToast(icon='warning', title='Something went wrong', timer=3500, confBtn=false, position='center', timerProgressBar=true).catch()
+        resetForm().catch(err => console.log(err))
+    })
+
     console.log(response)
 
     if (response) {
@@ -62,18 +67,19 @@ async function spawnToast(icon, title, timer=2500, confBtn=false,
 
 function failedTx(message) {
     Swal.fire({
-        icon: 'warning',
-        title: `Transaction Failed`,
+        // icon: 'warning',
+        // title: `Transaction Failed`,
         html: `
-         ${message}
-         <hr class="mt-4" />
-         <div class="my-2">
-             Need support? Join
-             <a href="https://t.me/GiverOfEpic" target="_blank" class="text-dark">
-                 <i class="fa-brands fa-telegram ms-1"></i> <b>GiverOfEpic</b>. 
-             </a>
-         </div>
-         <hr class="mb-2 mt-3" />
+            <span class="material-icons text-info mb-4 mt-2" style="font-size: 4rem;">feedback</span>
+            <p>${message}</p>
+            <hr class="mt-4" />
+            <div class="my-2">
+                Need support? Join
+                <a href="https://t.me/GiverOfEpic" target="_blank" class="text-dark">
+                    <i class="fa-brands fa-telegram ms-1"></i> <b>GiverOfEpic</b>. 
+                </a>
+             </div>
+             <hr class="mb-1 mt-4" />
          `,
         position: 'center',
         showConfirmButton: true,

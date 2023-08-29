@@ -7,13 +7,6 @@ let checkbox = $('#walletSyncedCheck')
 addressField.on('input', async function() {updateAddress()});
 checkbox.on('input', async function() {updateAddress()})
 
-let isClaimed = document.cookie.match('claimed')
-
-if (isClaimed) {
-    button.text("CLAIMED")
-    addressField.attr('disabled', true)
-}
-
 function updateAddress() {
     if (!addressField.val()) {
         addrIcon.css('color', 'grey')

@@ -6,11 +6,11 @@ from grpclib.client import Channel
 import psutil
 import ninja
 
-from wallet.models import FaucetWallet
 from wallet.python_sdk.src.grpc_server import server_pb2, server_grpc
+from wallet.schema import Payload, TxSchema, BalanceSchema
 from wallet.python_sdk.src.wallet import models
 from wallet.python_sdk.src import utils
-from wallet.schema import Payload, TxSchema, BalanceSchema
+from wallet.models import FaucetWallet
 from core import envs
 from faucet.models import (
     Transaction as TransactionManager,
@@ -38,10 +38,6 @@ async def wallet_call(call: str, data: dict = None) -> str:
 
 @api.post('/claim')
 async def claim(request, response: HttpResponse, payload: Payload):
-    # Check user cookie limit
-    if request.COOKIES.get('claimed'):
-        return utils.response(ERROR, 'already claimed')
-
     # Check user's limits
     ip, address = await connection_details(request, payload.address)
     authorized = await connection_authorized(ip, address)
@@ -77,12 +73,9 @@ async def claim(request, response: HttpResponse, payload: Payload):
     transaction = await TransactionManager.create_faucet_transaction(
         address=tx_args['address'], slate=tx_slate['data'], wallet=wallet_instance)
 
-    if 'PRODUCTION' in os.environ and ip.address not in envs.DEV_ADDRESSES and address.address not in envs.DEV_ADDRESSES:
-        # Update user's activity
-        await update_connection_details(ip.address, address.address)
-
-        # Set user cookie limit
-        response.set_cookie("claimed", True, max_age=envs.COOKIE_AGE)
+    # if 'PRODUCTION' in os.environ and address.address not in envs.DEV_ADDRESSES:
+    # Update user's activity
+    await update_connection_details(ip.address, address.address)
 
     return utils.response(SUCCESS, transaction.status, str(transaction.tx_slate_id))
 

@@ -51,6 +51,7 @@ class Address(models.Model):
     address = models.CharField(max_length=256)
     is_banned = models.BooleanField(default=False)
     is_locked = models.BooleanField(default=False)
+    manual_lock = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now_add=True)
     last_success_tx = models.DateTimeField(null=True, blank=True)
 
@@ -64,6 +65,18 @@ class Address(models.Model):
         return f'You have reached your limit, try again in ' \
                f'<b>{humanfriendly.format_timespan(self.locked_for().seconds)}</b>.'
 
+    @staticmethod
+    def manual_lock_msg():
+        return f'You are locked by admin due to abnormal activity (too many requests).'
+
+    @staticmethod
+    def too_many_requests_lock_msg():
+        return f'You are locked due to abnormal activity in the last 24h (too many requests).'
+
+    async def requests_last_24h(self):
+        delta = timezone.now() - datetime.timedelta(days=1)
+        return await Transaction.objects.filter(address=self.address, timestamp__gte=delta).acount()
+
     async def is_now_locked(self):
         if not self.last_success_tx:
             self.is_locked = False
@@ -74,17 +87,20 @@ class Address(models.Model):
         return self.is_locked
 
     def __str__(self):
-        return f"ReceiverAddress(is_locked='{self.is_locked}', address='{self.address}')"
+        last_active = self.last_activity.strftime("%m-%d %H:%M") if self.last_activity else ''
+        return f"[{last_active}] ReceiverAddress(is_locked='{self.is_locked}', address='{self.address}')"
 
 
 class ReceiverAddr(Address):
     def __str__(self):
-        return f"ReceiverAddr(is_locked='{self.is_locked}', address='{self.address}')"
+        last_active = self.last_activity.strftime("%m-%d %H:%M") if self.last_activity else ''
+        return f"[{last_active}] ReceiverAddress(is_locked='{self.is_locked}', address='{self.address}')"
 
 
 class IPAddr(Address):
     def __str__(self):
-        return f"IPAddr(is_locked='{self.is_locked}', address='{self.address}')"
+        last_active = self.last_activity.strftime("%m-%d %H:%M") if self.last_activity else ''
+        return f"[{last_active}] IPAddr(is_locked='{self.is_locked}', address='{self.address}')"
 
 
 class Transaction(models.Model):
@@ -161,6 +177,11 @@ class Transaction(models.Model):
             tx = await cls.objects.filter(tx_slate_id=tx_slate_id[0]).afirst()
 
             if tx:
+                if 'clear pending' in line:
+                    logger.info(f"clean pending transaction [{get_short(tx_slate_id[0])}]")
+                    await tx.update_params(status=TxStatus.FAILED)
+                    await EpicBoxLogger.objects.acreate(transaction=tx, data=line)
+
                 if "finalized successfully" in line:
                     logger.debug(f"{get_short(tx_slate_id[0])} database updated (finalized)")
                     await tx.update_params(status=TxStatus.FINALIZED)
@@ -248,7 +269,19 @@ async def connection_authorized(ip, address):
     if await ip.is_now_locked():
         return utils.response(ERROR, ip.locked_msg())
 
+    if ip.manual_lock:
+        return utils.response(ERROR, ip.manual_lock_msg())
+
+    if await ip.requests_last_24h() > envs.REQUESTS_PER_DAY:
+        return utils.response(ERROR, ip.too_many_requests_lock_msg())
+
     if await address.is_now_locked():
         return utils.response(ERROR, address.locked_msg())
+
+    if address.manual_lock:
+        return utils.response(ERROR, address.manual_lock_msg())
+
+    if await address.requests_last_24h() > envs.REQUESTS_PER_DAY:
+        return utils.response(ERROR, address.too_many_requests_lock_msg())
 
     return utils.response(SUCCESS, 'authorized')
