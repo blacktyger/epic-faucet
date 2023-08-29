@@ -1,5 +1,4 @@
 import json
-import os
 
 from django.http import HttpResponse
 from grpclib.client import Channel
@@ -70,8 +69,7 @@ async def claim(request, response: HttpResponse, payload: Payload):
 
     # Save transaction details to the database
     wallet_instance = await FaucetWallet.objects.aget(name=envs.WALLET['NAME'])
-    transaction = await TransactionManager.create_faucet_transaction(
-        address=tx_args['address'], slate=tx_slate['data'], wallet=wallet_instance)
+    transaction = await TransactionManager.create_faucet_transaction(address=tx_args['address'], slate=tx_slate['data'], wallet=wallet_instance)
 
     # if 'PRODUCTION' in os.environ and address.address not in envs.DEV_ADDRESSES:
     # Update user's activity

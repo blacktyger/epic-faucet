@@ -1,3 +1,4 @@
+import os
 import subprocess
 import asyncio
 import time
@@ -14,10 +15,8 @@ from wallet.python_sdk.src import utils
 from core import envs
 
 
-grpc_server_path = "/home/blacktyger/epic-faucet/src/wallet/python_sdk/server.py"
-
-
 async def run_wallet():
+    """ Init gRPC Client"""
     async with Channel(envs.GRPC_HOST, envs.GRPC_PORT) as channel:
         wallet = WalletServerStub(channel)
 
@@ -40,10 +39,15 @@ async def run_wallet():
 
 
 if __name__ == '__main__':
-    subprocess.Popen(['python', grpc_server_path])
-    time.sleep(2)
-    asyncio.run(run_wallet())
-    uvicorn.run("core.asgi:application", host=envs.UVICORN_HOST, port=envs.UVICORN_PORT, lifespan="off", workers=2)
+    if 'PRODUCTION' in os.environ:
+        kwargs = dict(host=envs.UVICORN_HOST, port=envs.UVICORN_PORT, lifespan="off", workers=2)
+        subprocess.Popen(['python', envs.GRPC_SERVER_PATH])
+        time.sleep(2)
+        asyncio.run(run_wallet())
+    else:
+        kwargs = dict(host=envs.UVICORN_HOST, port=envs.UVICORN_PORT, lifespan="off", reload=True)
+
+    uvicorn.run("core.asgi:application", **kwargs)
 
     try:
         # close running processes

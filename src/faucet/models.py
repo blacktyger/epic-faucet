@@ -7,15 +7,14 @@ from datetime import timedelta
 from django.db import models
 import humanfriendly
 
-from core import envs
 from wallet.python_sdk.src.utils import parse_uuid, logger
 from wallet.python_sdk.src import utils
-from core.envs import *
+from core import envs
 
-SUCCESS = False
-ERROR = True
 
 DECIMALS = Decimal(10 ** 8)
+SUCCESS = False
+ERROR = True
 
 
 class TxStatus:
@@ -59,7 +58,7 @@ class Address(models.Model):
         if not self.last_success_tx or not self.is_locked:
             return 0
         else:
-            return self.last_success_tx + timedelta(minutes=TIME_LOCK_MINUTES) - timezone.now()
+            return self.last_success_tx + timedelta(minutes=envs.TIME_LOCK_MINUTES) - timezone.now()
 
     def locked_msg(self):
         return f'You have reached your limit, try again in ' \
@@ -81,7 +80,7 @@ class Address(models.Model):
         if not self.last_success_tx:
             self.is_locked = False
         else:
-            self.is_locked = (timezone.now() - self.last_success_tx) < timedelta(minutes=TIME_LOCK_MINUTES)
+            self.is_locked = (timezone.now() - self.last_success_tx) < timedelta(minutes=envs.TIME_LOCK_MINUTES)
 
         await self.asave()
         return self.is_locked
@@ -132,10 +131,10 @@ class Transaction(models.Model):
         delta = timezone.now() - datetime.timedelta(days=1)
         last_24h_txs = await cls.objects.filter(timestamp__gte=delta, type=TxType.SENT).acount()
 
-        if last_24h_txs > DAILY_LIMIT:
+        if last_24h_txs > envs.DAILY_LIMIT:
             return utils.response(ERROR, "Faucet's limit for the day is reached, try again tomorrow!")
 
-        return utils.response(SUCCESS, f'Limit not reached yet ({last_24h_txs}/{DAILY_LIMIT})')
+        return utils.response(SUCCESS, f'Limit not reached yet ({last_24h_txs}/{envs.DAILY_LIMIT})')
 
     @classmethod
     async def receive_transaction(cls, data: str):
@@ -204,8 +203,8 @@ class Transaction(models.Model):
             _address = _address.split('//')[-1]
 
         try:
-            if 0.00000001 < float(amount) > MAX_AMOUNT:
-                return utils.response(ERROR, f'Invalid amount (0 > {amount} < {MAX_AMOUNT})')
+            if 0.00000001 < float(amount) > envs.MAX_AMOUNT:
+                return utils.response(ERROR, f'Invalid amount (0 > {amount} < {envs.MAX_AMOUNT})')
             elif len(_address) != 52 or '@epicbox' not in address:
                 return utils.response(ERROR, 'Invalid receiver_address')
 

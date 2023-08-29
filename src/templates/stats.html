@@ -1,0 +1,137 @@
+{% extends "base.html" %} {% load static %}
+
+{% block body %}
+
+<div class="col-12">
+    <div class="p-2">
+        <p class="fs-3 my-3 text-secondary">
+            <span class="material-icons align-middle mb-1"
+                  style="font-size: 3rem;">
+                query_stats
+            </span>
+            Analytics
+        </p>
+        <table class="table table-striped table-dark table-hover align-middle table-responsive-sm rounded-3">
+            <thead>
+                <tr>
+                    <th scope="col">
+                        <span class="material-icons me-2">subject</span>
+                        Transactions
+                    </th>
+                    <th class="text-end fw-lighter opacity-75">
+                        <small>Last Update: <span class="data-cell" id="update"></span></small>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+
+            {%  for field in fields %}
+                <tr>
+                    <th scope="row">
+                        {{ field }}
+                    </th>
+                    <td class="text-end">
+                        <span id="tx{{ field }}" class="data-cell"></span>
+                    </td>
+                </tr>
+                {%  endfor %}
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row justify-content-center my-3 opacity-75">
+    <div class="col-10 text-center">
+        <canvas id="goodCanvas1" style="margin-top: 20px"
+                aria-label="Hello ARIA World" role="img"></canvas>
+    </div>
+</div>
+
+
+<script>
+let firstUpdate = true
+
+    async function updateStats(data) {
+        let fields = ['txTotal', 'txFinalized', 'txPending', 'txFailed', 'update', 'txDeposited', 'txClaimed']
+
+        if (firstUpdate) {
+            await sleep(2500)
+            firstUpdate = false
+        }
+
+        for (let i = 0; i < fields.length; i++) {
+            let field = $(`#${fields[i]}`)
+            let newVal = data[`${fields[i]}`]
+            let currentVal = field.text()
+
+            if (['txDeposited', 'txClaimed'].includes(fields[i])) {newVal = `${newVal} EPIC`}
+
+            if (String(currentVal) !== String(newVal)) {
+                console.log(currentVal)
+                console.log(newVal)
+                field.fadeOut(1000).text(newVal).fadeIn(1000)
+            }
+        }
+    }
+
+    $(document).ready(function () {
+        const spinner = `<div class="spinner-grow text-secondary" role="status" style="width: 14px; height: 14px;"></div>`
+        $('.data-cell').html(spinner)
+
+        const source = new EventSource('{% url "stats_stream" %}');
+
+        console.log(source)
+
+        source.onerror = function (event) {
+            source.close()
+            console.log('Closing the connection');
+        };
+
+        const config = {
+          type: 'pie',
+          data: {
+            labels: [
+                'Finalized',
+                'Pending',
+                'Failed'
+              ],
+              datasets: [{
+                label: 'Transactions',
+                data: [300, 50, 100],
+                backgroundColor: [
+                  'rgb(82, 140, 50)',
+                  'rgb(54, 162, 235)',
+                  'rgb(255, 115, 37)'
+                ],
+                hoverOffset: 6
+              }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: "top",
+                        align: "center"
+                    },
+                },
+                devicePixelRatio: 3,
+            }
+        };
+
+        Chart.defaults.font.family = "Lato";
+        Chart.defaults.font.size = 16;
+        Chart.defaults.color = "white";
+
+
+        const chart = new Chart($('#goodCanvas1'), config);
+        source.onmessage = function (event) {
+            let data = JSON.parse(event.data)
+            updateStats(data).catch(error => console.log(error))
+            config.data.datasets[0].data = [data.txFinalized, data.txPending, data.txFailed]
+
+            chart.update()
+        };
+    });
+
+</script>
+{% endblock body %}

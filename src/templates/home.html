@@ -3,6 +3,15 @@
 {% block body %}
 
     <div class="row justify-content-between my-3 px-1">
+
+        <div class="col-12 mb-3">
+            <a href="{% url 'stats' %}" class="btn btn-sm btn-warning w-100 py-1" style="opacity: 85%">
+                <span class="material-icons align-middle mb-1">query_stats</span>
+                <strong>FAUCET ANALYTICS</strong>
+                <sup><span class="badge bg-dark">NEW</span></sup>
+            </a>
+        </div>
+
         <div class="col-6">
             <button class="btn btn-sm btn-secondary" style="opacity: 85%" data-bs-toggle="tooltip" data-bs-placement="top"
                     data-bs-title="{{ wallet.full_balance }}">
@@ -18,7 +27,6 @@
                 Charge Wallet
             </button>
         </div>
-
     </div>
 
     <div class="accordion accordion-flush my-3 px-1">
